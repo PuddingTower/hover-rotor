@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.log
+.DS_Store
+
+# 生成产物
+results/
+results_*/
+output/
+_smoke*/
+_dev_*.log
+*.step
+*.stl
+*.dxf
+!tests/fixtures/*.dxf

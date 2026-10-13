@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hover-rotor"
+version = "0.1.0"
+description = "端到端悬停旋翼气动优化与钝尾缘截面制造系统：输入 T/R/t_te，输出 FM 最大化的十截面可制造桨叶"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "hover-rotor contributors" }]
+keywords = ["rotor", "hover", "BEMT", "CST", "flatback", "aerodynamics", "eVTOL", "CAD"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+  "plotly>=5.18",
+  "pydantic>=2.5",
+  "click>=8.1",
+  "rich>=13.0",
+  "tabulate>=0.9",
+]
+
+[project.optional-dependencies]
+# D-09：DXF 与 STEP/STL 两个导出器都是可选依赖，缺席时抛 OptionalDependencyError 而非导入期崩。
+# 拆成两个 extras 是有意为之：build123d 依赖 OpenCASCADE 二进制轮（cadquery-ocp），
+# 在部分平台/Python 版本上根本没有可用轮子。把它并进 [cad] 会让 `pip install ".[cad]"`
+# 直接失败，连带 ezdxf 那半也装不上、CI 从"跳过三维断言"变成"装不上依赖而红"。
+cad = ["ezdxf>=1.1"]
+step = ["build123d>=0.5"]
+neural = ["neuralfoil>=0.1"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+hover-rotor-opt = "hover_rotor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["hover_rotor*"]
+
+[tool.setuptools.package-data]
+# py.typed 不进 wheel 的话，下游 mypy 会把整个包当 untyped，静态检查形同虚设
+hover_rotor = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "slow: 需要全局搜索或 CAD 内核的高耗时测试",
+]
+
+[tool.ruff]
+line-length = 110
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.10"
+mypy_path = "src"
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src/hover_rotor"]
+# 不 omit cli.py：Task 5.3 的判定准则就是端到端命令行跑通，
+# 把它排除在覆盖率之外等于把验收项从统计里藏起来。
