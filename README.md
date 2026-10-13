@@ -9,11 +9,15 @@ DE + SLSQP 两阶段反设计 → 制造数据导出**，全程无尖尾缘、�
 
 Apache-2.0 | Python ≥ 3.10 | 161 个测试全绿，覆盖率 94%（门禁 ≥85%）
 
+仓库：<https://github.com/PuddingTower/hover-rotor>
+
 ![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 
-> 发布到 GitHub 后再加 CI 徽标：把 `![CI](https://github.com/<owner>/hover-rotor/actions/workflows/ci.yml/badge.svg)`
-> 的 `<owner>` 换成实际用户名即可。此处先不放，是因为指向不存在仓库的徽标等于伪造状态。
+> CI 徽标暂缺：`.github/workflows/` 需仓库所有者先给 `gh` 补 `workflow` 权限
+> （`gh auth refresh -s workflow`）才能推送，GitHub 会拒绝缺该权限的 workflow 提交。
+> 权限补齐后加回这一行即可，此前放一个跑不起来的徽标等于伪造状态：
+> `![CI](https://github.com/PuddingTower/hover-rotor/actions/workflows/ci.yml/badge.svg)`
 
 ---
 
@@ -35,7 +39,7 @@ Apache-2.0 | Python ≥ 3.10 | 161 个测试全绿，覆盖率 94%（门禁 ≥8
 ## 2 快速启动
 
 ```bash
-git clone <你的仓库地址> hover-rotor && cd hover-rotor
+git clone https://github.com/PuddingTower/hover-rotor.git && cd hover-rotor
 pip install -e ".[dev,cad,step]"          # step 拉 OpenCASCADE，只要气动链路则 .[dev]
 
 hover-rotor-opt --thrust 80 --radius 0.75 --te-thickness 0.0025 --output-dir ./results
