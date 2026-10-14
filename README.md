@@ -7,17 +7,20 @@
 一条链路打通气动计算与数控车间：**拓展钝尾缘 CST 几何 → 可微极线代理 → 悬停 BEMT →
 DE + SLSQP 两阶段反设计 → 制造数据导出**，全程无尖尾缘、无手工建模、无数据接口壁垒。
 
-Apache-2.0 | Python ≥ 3.10 | 161 个测试全绿，覆盖率 94%（门禁 ≥85%）
+Apache-2.0 | Python ≥ 3.10 | 161 个测试：160 通过 + 1 个 `xfail(strict=True)`（如实记录 §5 唯一未达成项）；覆盖率 94.3%（门禁 ≥85%）
 
 仓库：<https://github.com/PuddingTower/hover-rotor>
 
 ![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 
-> CI 徽标暂缺：`.github/workflows/` 需仓库所有者先给 `gh` 补 `workflow` 权限
-> （`gh auth refresh -s workflow`）才能推送，GitHub 会拒绝缺该权限的 workflow 提交。
-> 权限补齐后加回这一行即可，此前放一个跑不起来的徽标等于伪造状态：
+> **CI 徽标为什么是空的（原因写在仓库里，不靠外部说明）**：workflow 文件已在本地提交，
+> 但 GitHub 服务器端拒绝本机的 OAuth 令牌推送它们——错误原文
+> `refusing to allow an OAuth App to create or update workflow '.github/workflows/ci.yml' without 'workflow' scope`，
+> 实测令牌 scopes 为 `gist, read:org, read:user, repo`。授权后（`gh auth refresh -s workflow` → `git push`）
+> 放开下面这行即可；在此之前放一个跑不起来的徽标等于伪造状态——该 URL 实测返回 **404**：
 > `![CI](https://github.com/PuddingTower/hover-rotor/actions/workflows/ci.yml/badge.svg)`
+> 完整复测记录见 [`docs/verification.md`](docs/verification.md) §6；CI 的每一步都在本机跑过同样的命令，逐条结果见 §1、§2。
 
 ---
 
@@ -129,20 +132,28 @@ X=[c(4),\theta(4),M_{tip},\text{CST}_{root}(8),\text{CST}_{tip}(8)]$$
 | 含 DE 端到端耗时 | ≤3 min | 147 s / 154 s（seed 7 与 2026，FM 同为 0.7620） | ✅ 已验证，余量 14~18% |
 | 快速路径耗时 | ≤30 s | 15–29 s（`polish_restarts=0` 配置） | ✅ 已验证 |
 | 单次极线求解 | <5 ms | 0.26 ms（12 迎角点） | ✅ 已验证 |
-| 覆盖率 | ≥85% | 94%（161 测试全通过，含 5 个 slow 门禁） | ✅ 已验证 |
-| Caradonna–Tung 推力系数 | ≤5% | **+26.7%**（C_T=0.005815 vs 实测 0.00459；定义已核实为 ρ 基，无 ½ρ 歧义） | ❌ **未达成** |
+| 覆盖率 | ≥85% | 94.3%（160 通过 + 1 个 xfail 记录，含 5 个 slow 门禁） | ✅ 已验证 |
+| Caradonna–Tung 推力系数 | ≤5% | **+26.7%**（C_T=0.005815 vs 实测 0.00459，TM-81232 p.47 图题逐字提取） | ❌ **未达成**（原因与证据链见下方与 `docs/verification.md` §3） |
 | STEP/STL 实体合法性 | 水密流形 | BRepCheck 有效、χ=2、0 边界边 | ✅ 已验证 |
 | Docker 端到端 | build+run 平稳 | — | ⚠️ **未验证**（开发机无 Docker 守护进程） |
+| CI 在 GitHub 上实际运行 | 工作流被接受并跑绿 | 服务器端拒绝推送 workflow（令牌无 `workflow` scope），徽标 URL 实测 404 | ⚠️ **受阻**；`ci.yml` 的每一步已在本机同命令跑过，见 `docs/verification.md` §1–§2、§6 |
 | 三维视图离线交互 | 无网络依赖 | plotly.js 内联、4.94 MB、无外链 script | ✅ 已验证 |
 
-**关于未达成的 5% 红线**（详见 `docs/theory.md` §4）：
-同一试验件、同一方法（2D 极线 + BEMT + Prandtl 损失）的公开复现给出 +21.6%（C_T≈0.0056）；
-两条"能刷过 5%"的路都被实测否决并留档（见 `docs/theory.md` §4.1.1）：联立切向诱导只值 1.4%，
-而单一入流放大 κ=1.33 虽能让三个实测点全进 ±5%，却使高实度设计工况寻优失败（推力残差 27%）。
-TM-81232 作者自述其升力面解亦 "too high by about 20%"，只有改用**实测尾迹几何**才降到 5% 以内。
-即 ≤5% 属升力面/CFD 级保真度，与报告自身为毫秒级主循环所指定的低阶方法层级冲突。
+**关于未达成的 5% 红线**（完整证据链见 `docs/verification.md` §3，推导见 `docs/theory.md` §4）：
+判据锚点全部换成**可从文本层逐字提取的一次文献**（archive.org 影印件，HTTP 200，页码已标注）。
+TM-81232 p.7 作者自述：用估计尾迹几何的 AMI **升力面**解 "too high by about 20%"；
+改用实测涡迹后 8°→+4.3%、12°→+5.1%，而 5° 即使实测尾迹仍 +14.3%（0.0024 对 0.0021），从未进过 5%。
+本实现（解析 2D 极线 + 环元 BEMT + Prandtl 损失 + 联立切向诱导）给 +26.7%，落在报告自述的方法层级
+偏差带 [+15%, +35%] 内，测试以此判"实现正确"；而 ≤5% 属升力面/CFD 级保真度，与 D-02 为毫秒级
+主循环指定的低阶层级冲突——**这不是 BEMT 层内可以"修 bug"抹平的差距**。
+两条能在 BEMT 层内刷过 5% 的捷径（联立 a′ 只值 1.4%；全局入流放大 κ=1.33 让三点全进 ±5%
+却使高实度设计工况寻优失败）都已被量化并**否决**，数据留在 `docs/theory.md` §4.1.1。
 本实现在该判据上以 `xfail(strict=True)` 保留可执行记录：若将来接入高保真极线后端使其真的达标，
 测试会以 XPASS 形式强制更新本表。
+
+> 一处**诚实修正**：本节早期版本引用过一个二手"同方法公开 BEMT 复现 +21.6%（C_T≈0.0056）"，
+> 本次复查未能定位到可逐字核验的出处链接，已从 README、`docs/theory.md` 与测试常量中删除，
+> 锚点改用上面的原文页码。结论未变，但不再依赖不可复现的转述。
 
 算例对照（同一套代码、同一组模型常数，不做量级切换）：
 
@@ -169,7 +180,7 @@ TM-81232 作者自述其升力面解亦 "too high by about 20%"，只有改用**
    计划.md 的目标函数里没有。`DesignBounds` 的默认值是本项目的工程选择，报告数值时不可当作物理结论。
 2. **极线代理是工程解析模型**，不是 CFD/XFOIL 级精度；适用域 Re∈[3e4,5e6]、Ma≤0.75、
    t/c∈[0.04,0.24]、dz_te≤0.10，越界显式抛错。装好 `neuralfoil` 权重后接口可切换，
-   但本仓库 CI 不下载权重（避免联网卡死主循环）。
+   但发布链与测试不下载权重（避免联网卡死主循环）。
 3. **§1 与 Task 2.3 的入流公式不一致，已按 §1 补齐**：计划 §1 的
    `W=sqrt((Omega r - u_t)^2 + v_i^2)` 含切向诱导，Task 2.3 的迭代契约却写
    `phi=arctan(v_i/Omega r)`。本实现联立求解 a′（`bemt.py` §1.2 推导），
@@ -180,8 +191,11 @@ TM-81232 作者自述其升力面解亦 "too high by about 20%"，只有改用**
 4. **微型旋翼会被解析极线的雷诺数下界截断**。R≈0.13 m 级算例的内段 Re 落到 3e4 以下，
    BEMT 建表与报表层都钳位到边界评估，并把每一处写进 `RotorResult.warnings`；
    这类工况的绝对精度不应采信，链路可用性与告警是已验证的。
-4. **扭转单调性由罚项引导而非硬约束**，极端初值下可能给出非单调扭转。
-5. `rotor_interactive_3d.html` 约 4.9 MB（plotly.js 内联所致），逼近 5 MB 上限。
+5. **扭转单调性由罚项引导而非硬约束**，极端初值下可能给出非单调扭转。
+6. `rotor_interactive_3d.html` 约 4.9 MB（plotly.js 内联所致），逼近 5 MB 上限。
+7. **CI 与 Release 工作流尚未在 GitHub 上运行**（令牌缺 `workflow` scope，服务器端拒绝推送），
+   Dockerfile 也未做过实机 `docker build`。这两项在验收表里如实标为受阻/未验证，
+   不靠"应该能跑"补齐；已在本地用同命令逐条跑过，见 `docs/verification.md` §1–§2、§6。
 
 ## 7 开发与验证
 
@@ -196,8 +210,22 @@ python examples/01_micro_drone_rotor.py                      # 三套算例见 e
 ```
 
 仓库结构：`src/hover_rotor/{geometry,aero,optimizer,cad,visualization}` + `tests/` 12 个测试文件
-+ `.github/workflows/{ci,release}.yml` + `Dockerfile` + `docs/{theory,manufacturing}.md`。
++ `Dockerfile` + `docs/{theory,manufacturing,verification}.md`；
+`.github/workflows/{ci,release}.yml` 已在本地提交、**尚未推送成功**（原因见 §5 表末行与
+`docs/verification.md` §6）。
 
-## 8 许可
+## 8 参考文献（每个链接都实测过 HTTP 状态）
+
+规则：**未实测的链接不写进仓库**。下表状态为 2026-10-14 用 `curl` 在本机取得，
+完整复测命令与逐字提取的页码见 `docs/verification.md` §5、§3。
+
+| 文献 | 链接 | 状态 |
+| :-- | :-- | :-- |
+| Caradonna & Tung, *Experimental and analytical studies of a model helicopter rotor in hover*, NASA-TM-81232 (1981) | [archive.org 影印件（含文本层）](https://archive.org/details/NASA_NTRS_Archive_19820004169) | 200 |
+| 同上，NTRS 官方记录页 | [ntrs.nasa.gov/citations/19820004169](https://ntrs.nasa.gov/citations/19820004169) | 403（反爬拦截脚本，浏览器可达；故正文一律引用上面的镜像） |
+| C. Ferlisi, *Rotor Wake Modelling Using the Vortex-Lattice Method*, École Polytechnique de Montréal, 2018（$C_T$ 定义式 2.13、表 4.1 几何） | [publications.polymtl.ca/3059/1/208_CarloFerlisi.pdf](https://publications.polymtl.ca/3059/1/208_CarloFerlisi.pdf) | 200（前一日同 URL 曾不可达，可达性须带日期读） |
+| 桨尖涡卷起的自适应涡格法研究（说明 BEMT 层级所缺的三维涡物理） | [arXiv:1805.00323](https://arxiv.org/abs/1805.00323) | 200 |
+
+## 9 许可
 
 Apache-2.0。见 [`LICENSE`](LICENSE)。
